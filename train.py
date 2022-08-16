@@ -1,6 +1,7 @@
 import os
 import pickle
 import argparse
+import shutil
 
 import torch
 import numpy as np
@@ -9,6 +10,7 @@ import pytorch_lightning as pl
 from torch.utils.data import Dataset, DataLoader
 from pytorch_lightning.callbacks import ModelCheckpoint
 from tqdm import tqdm
+from pathlib import Path
 
 from data import PolynomialLanguage, train_test_split
 from utils import get_device, set_seed, score
@@ -113,7 +115,7 @@ class Seq2Seq(pl.LightningModule):
             device,
         )
 
-        self.criterion = nn.CrossEntropyLoss(ignore_index=self.trg_lang.PAD_idx)
+        self.criterion = nn.CrossEntropyLoss(ignore_index=self.trg_lang.PAD_idx, label_smoothing=0.1)
         self.initialize_weights()
         self.to(device)
 
@@ -160,6 +162,9 @@ class Seq2Seq(pl.LightningModule):
         # src = [batch size, src len]
         # trg = [batch size, trg len]
 
+        print(f"src: {src}")
+        print(f"trg: {trg}")
+
         src_mask = self.make_src_mask(src)
         trg_mask = self.make_trg_mask(trg)
 
@@ -177,7 +182,7 @@ class Seq2Seq(pl.LightningModule):
 
         return output, attention
 
-    def predict(self, sentences, batch_size=128):
+    def predict(self, sentences, batch_size=128, trg=None):
         """Efficiently predict a list of sentences"""
         pred_tensors = [
             sentence_to_tensor(sentence, self.src_lang)
@@ -212,6 +217,7 @@ class Seq2Seq(pl.LightningModule):
         # batch = src_tensor when predicting = [batch_size, src len]
 
         src_tensor = batch
+        # print(f"src_tensor.size(): {src_tensor.size()}")
         src_mask = self.make_src_mask(batch)
 
         # src_mask = [batch size, 1, 1, src len]
@@ -422,8 +428,7 @@ def train(
 
 def evaluate(model, test_pairs, batch_size=128):
     src_sentences, trg_sentences = zip(*test_pairs)
-
-    prd_sentences, _, _ = model.predict(src_sentences, batch_size=batch_size)
+    prd_sentences, _, _ = model.predict(src_sentences, batch_size=batch_size, trg=trg_sentences)
     assert len(prd_sentences) == len(src_sentences) == len(trg_sentences)
 
     total_score = 0
@@ -473,6 +478,10 @@ if __name__ == "__main__":
     parser = Seq2Seq.add_model_specific_args(parser)
     parser = pl.Trainer.add_argparse_args(parser)
     args = parser.parse_args()
+
+    dirpath = Path(args.dirpath)
+    if dirpath.exists() and dirpath.is_dir():
+        shutil.rmtree(dirpath)
 
     os.makedirs(args.dirpath, exist_ok=False)
     train_set_pairs = PolynomialLanguage.load_pairs(args.train_path)

@@ -84,6 +84,7 @@ class Seq2Seq(pl.LightningModule):
         enc_dropout=0.1,
         dec_dropout=0.1,
         lr=0.0005,
+        encoder_version="Rezero",
         **kwargs,  # throwaway
     ):
         super().__init__()
@@ -103,6 +104,7 @@ class Seq2Seq(pl.LightningModule):
             enc_pf_dim,
             enc_dropout,
             device,
+            encoder_version
         )
 
         self.decoder = Decoder(
@@ -115,7 +117,7 @@ class Seq2Seq(pl.LightningModule):
             device,
         )
 
-        self.criterion = nn.CrossEntropyLoss(ignore_index=self.trg_lang.PAD_idx, label_smoothing=0.1)
+        self.criterion = nn.CrossEntropyLoss(ignore_index=self.trg_lang.PAD_idx, label_smoothing=0.2)
         self.initialize_weights()
         self.to(device)
 
@@ -161,9 +163,6 @@ class Seq2Seq(pl.LightningModule):
 
         # src = [batch size, src len]
         # trg = [batch size, trg len]
-
-        print(f"src: {src}")
-        print(f"trg: {trg}")
 
         src_mask = self.make_src_mask(src)
         trg_mask = self.make_trg_mask(trg)

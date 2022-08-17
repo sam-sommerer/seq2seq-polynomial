@@ -115,7 +115,7 @@ class Seq2Seq(pl.LightningModule):
             device,
         )
 
-        self.criterion = nn.CrossEntropyLoss(ignore_index=self.trg_lang.PAD_idx, label_smoothing=0.1)
+        self.criterion = nn.CrossEntropyLoss(ignore_index=self.trg_lang.PAD_idx, label_smoothing=0.2)
         self.initialize_weights()
         self.to(device)
 

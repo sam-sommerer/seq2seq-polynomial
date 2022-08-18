@@ -131,58 +131,23 @@ class Seq2Seq(pl.LightningModule):
         self.decoder.apply(_initialize_weights)
 
     def make_src_mask(self, src):
-
-        # src = [batch size, src len]
-
         src_mask = (src != self.src_lang.PAD_idx).unsqueeze(1).unsqueeze(2)
-        # print(f"src_mask: {src_mask}")
-        # print(f"src_mask.size(): {src_mask.size()}")
-
-        # src_mask = [batch size, 1, 1, src len]
-
         return src_mask
 
     def make_encoder_src_mask(self, src, num_heads):
-
-        # src = [batch size, src len]
-
         src_mask = (src == self.src_lang.PAD_idx).unsqueeze(-2)
-        # print(f"encoder_src_mask.size(): {src_mask.size()}")
         src_mask = torch.repeat_interleave(src_mask, repeats=src_mask.size(2), dim=1)
-        # print(f"encoder_src_mask.size(): {src_mask.size()}")
         src_mask = src_mask.repeat(num_heads, 1, 1)
-        # print(f"encoder_src_mask: {src_mask}")
-        # print(f"encoder_src_mask.size(): {src_mask.size()}")
-
-        # src_mask = [batch size, 1, 1, src len]
-
         return src_mask
 
     def make_trg_mask(self, trg):
-
-        # trg = [batch size, trg len]
-
         trg_pad_mask = (trg != self.trg_lang.PAD_idx).unsqueeze(1).unsqueeze(2)
-
-        # trg_pad_mask = [batch size, 1, 1, trg len]
-
         trg_len = trg.shape[1]
-
         trg_sub_mask = torch.tril(torch.ones((trg_len, trg_len)).type_as(trg)).bool()
-
-        # trg_sub_mask = [trg len, trg len]
-
         trg_mask = trg_pad_mask & trg_sub_mask
-
-        # trg_mask = [batch size, 1, trg len, trg len]
-
         return trg_mask
 
     def forward(self, src, trg):
-
-        # src = [batch size, src len]
-        # trg = [batch size, trg len]
-
         print(f"src: {src}")
         print(f"trg: {trg}")
 
@@ -190,19 +155,9 @@ class Seq2Seq(pl.LightningModule):
         trg_mask = self.make_trg_mask(trg)
 
         encoder_src_mask = self.make_encoder_src_mask(src, self.enc_heads)
-
-        # src_mask = [batch size, 1, 1, src len]
-        # trg_mask = [batch size, 1, trg len, trg len]
-
         enc_src = self.encoder(src, encoder_src_mask)
 
-        # enc_src = [batch size, src len, hid dim]
-
         output, attention = self.decoder(trg, enc_src, trg_mask, src_mask)
-
-        # output = [batch size, trg len, output dim]
-        # attention = [batch size, n heads, trg len, src len]
-
         return output, attention
 
     def predict(self, sentences, batch_size=128, trg=None):
@@ -229,53 +184,24 @@ class Seq2Seq(pl.LightningModule):
             words.extend(pred_words)
             attention.extend(pred_attention)
 
-        # sentences = [num pred sentences]
-        # words = [num pred sentences, trg len]
-        # attention = [num pred sentences, n heads, trg len, src len]
-
         return sentences, words, attention
 
     def predict_batch(self, batch):
         """Predicts on a batch of src_tensors."""
-        # batch = src_tensor when predicting = [batch_size, src len]
-
         src_tensor = batch
-        # print(f"src_tensor.size(): {src_tensor.size()}")
         src_mask = self.make_src_mask(batch)
         encoder_src_mask = self.make_encoder_src_mask(batch, self.enc_heads)
 
-        # src_mask = [batch size, 1, 1, src len]
-
         enc_src = self.encoder(src_tensor, encoder_src_mask)
 
-        # enc_src = [batch size, src len, hid dim]
-
         trg_indexes = [[self.trg_lang.SOS_idx] for _ in range(len(batch))]
-
-        # trg_indexes = [batch_size, cur trg len = 1]
-
         trg_tensor = torch.LongTensor(trg_indexes).to(self.device)
 
-        # trg_tensor = [batch_size, cur trg len = 1]
-        # cur trg len increases during the for loop up to the max len
-
         for _ in range(self.hparams.max_len):
-
             trg_mask = self.make_trg_mask(trg_tensor)
-
-            # trg_mask = [batch size, 1, cur trg len, cur trg len]
-
             output, attention = self.decoder(trg_tensor, enc_src, trg_mask, src_mask)
-
-            # output = [batch size, cur trg len, output dim]
-
             preds = output.argmax(2)[:, -1].reshape(-1, 1)
-
-            # preds = [batch_size, 1]
-
             trg_tensor = torch.cat((trg_tensor, preds), dim=-1)
-
-            # trg_tensor = [batch_size, cur trg len], cur trg len increased by 1
 
         src_tensor = src_tensor.detach().cpu().numpy()
         trg_tensor = trg_tensor.detach().cpu().numpy()
@@ -285,9 +211,6 @@ class Seq2Seq(pl.LightningModule):
         pred_sentences = []
         pred_attention = []
         for src_indexes, trg_indexes, attn in zip(src_tensor, trg_tensor, attention):
-            # trg_indexes = [trg len = max len (filled with eos if max len not needed)]
-            # src_indexes = [src len = len of longest sentence (padded if not longest)]
-
             # indexes where first eos tokens appear
             src_eosi = np.where(src_indexes == self.src_lang.EOS_idx)[0][0]
             _trg_eosi_arr = np.where(trg_indexes == self.trg_lang.EOS_idx)[0]
@@ -299,7 +222,6 @@ class Seq2Seq(pl.LightningModule):
             # cut target indexes up to first eos token and also exclude sos token
             trg_indexes = trg_indexes[1:trg_eosi]
 
-            # attn = [n heads, trg len=max len, src len=max len of sentence in batch]
             # we want to keep n heads, but we'll cut trg len and src len up to
             # their first eos token
             attn = attn[:, :trg_eosi, :src_eosi]  # cut attention for trg eos tokens
@@ -323,17 +245,10 @@ class Seq2Seq(pl.LightningModule):
         src, trg = batch
 
         output, _ = self(src, trg[:, :-1])
-
-        # output = [batch size, trg len - 1, output dim]
-        # trg = [batch size, trg len]
-
         output_dim = output.shape[-1]
 
         output = output.contiguous().view(-1, output_dim)
         trg = trg[:, 1:].contiguous().view(-1)
-
-        # output = [batch size * trg len - 1, output dim]
-        # trg = [batch size * trg len - 1]
 
         loss = self.criterion(output, trg)
         self.log("train_loss", loss)
@@ -343,17 +258,9 @@ class Seq2Seq(pl.LightningModule):
         src, trg = batch
 
         output, _ = self(src, trg[:, :-1])
-
-        # output = [batch size, trg len - 1, output dim]
-        # trg = [batch size, trg len]
-
         output_dim = output.shape[-1]
-
         output = output.contiguous().view(-1, output_dim)
         trg = trg[:, 1:].contiguous().view(-1)
-
-        # output = [batch size * trg len - 1, output dim]
-        # trg = [batch size * trg len - 1]
 
         loss = self.criterion(output, trg)
         self.log("val_loss", loss, prog_bar=True)

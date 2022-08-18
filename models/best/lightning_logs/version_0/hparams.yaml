@@ -1,0 +1,290 @@
+accelerator: null
+accumulate_grad_batches: null
+amp_backend: native
+amp_level: null
+auto_lr_find: false
+auto_scale_batch_size: false
+auto_select_gpus: false
+batch_size: 512
+benchmark: null
+check_val_every_n_epoch: 1
+dec_dropout: 0.1
+dec_heads: 8
+dec_layers: 3
+dec_pf_dim: 512
+default_root_dir: null
+detect_anomaly: false
+deterministic: null
+devices: null
+dirpath: models/best
+enable_checkpointing: true
+enable_model_summary: true
+enable_progress_bar: true
+enc_dropout: 0.1
+enc_heads: 8
+enc_layers: 3
+enc_pf_dim: 512
+encoder_Version: ReZero
+encoder_version: ReZero
+fast_dev_run: false
+gpus: 1
+gradient_clip_algorithm: null
+gradient_clip_val: 1
+hid_dim: 256
+ipus: null
+limit_predict_batches: null
+limit_test_batches: null
+limit_train_batches: null
+limit_val_batches: null
+log_every_n_steps: 50
+logger: true
+lr: 0.0005
+max_epochs: 10
+max_len: 32
+max_steps: -1
+max_time: null
+min_epochs: null
+min_steps: null
+move_metrics_to_cpu: false
+multiple_trainloader_mode: max_size_cycle
+num_nodes: 1
+num_processes: null
+num_sanity_val_steps: 2
+num_workers: 8
+overfit_batches: 0.0
+plugins: null
+precision: 32
+profiler: null
+reload_dataloaders_every_n_epochs: 0
+replace_sampler_ddp: true
+resume_from_checkpoint: null
+seed: 1234
+src_lang: !!python/object:data.PolynomialLanguage
+  index2word:
+    0: <pad>
+    1: <sos>
+    2: <eos>
+    3: <unk>
+    4: '-'
+    5: '6'
+    6: '3'
+    7: '*'
+    8: t
+    9: '**'
+    10: '2'
+    11: (
+    12: i
+    13: '7'
+    14: )
+    15: s
+    16: '5'
+    17: +
+    18: '8'
+    19: x
+    20: '4'
+    21: '0'
+    22: z
+    23: '1'
+    24: '9'
+    25: k
+    26: a
+    27: h
+    28: j
+    29: c
+    30: y
+    31: n
+    32: o
+    33: cos
+    34: tan
+    35: sin
+  max_length: 25
+  n_words: 36
+  word2count:
+    (: 1624942
+    ): 1624942
+    '*': 2304733
+    '**': 40046
+    +: 443774
+    '-': 1612743
+    '0': 152154
+    '1': 703240
+    '2': 897630
+    '3': 456990
+    '4': 333855
+    '5': 332082
+    '6': 332250
+    '7': 328705
+    '8': 331814
+    '9': 239876
+    a: 120356
+    c: 120187
+    cos: 19289
+    h: 119745
+    i: 239822
+    j: 119714
+    k: 120109
+    n: 239103
+    o: 119538
+    s: 240306
+    sin: 19220
+    t: 120536
+    tan: 19239
+    x: 119518
+    y: 120644
+    z: 120376
+  word2index:
+    (: 11
+    ): 14
+    '*': 7
+    '**': 9
+    +: 17
+    '-': 4
+    '0': 21
+    '1': 23
+    '2': 10
+    '3': 6
+    '4': 20
+    '5': 16
+    '6': 5
+    '7': 13
+    '8': 18
+    '9': 24
+    <eos>: 2
+    <pad>: 0
+    <sos>: 1
+    <unk>: 3
+    a: 26
+    c: 29
+    cos: 33
+    h: 27
+    i: 12
+    j: 28
+    k: 25
+    n: 31
+    o: 32
+    s: 15
+    sin: 35
+    t: 8
+    tan: 34
+    x: 19
+    y: 30
+    z: 22
+strategy: null
+sync_batchnorm: false
+test_path: data/test_set.txt
+tpu_cores: null
+track_grad_norm: -1
+train_path: data/train_set.txt
+train_val_split_ratio: 0.95
+trg_lang: !!python/object:data.PolynomialLanguage
+  index2word:
+    0: <pad>
+    1: <sos>
+    2: <eos>
+    3: <unk>
+    4: '-'
+    5: '6'
+    6: '3'
+    7: '*'
+    8: t
+    9: '**'
+    10: '2'
+    11: i
+    12: '4'
+    13: +
+    14: '1'
+    15: '8'
+    16: '9'
+    17: '5'
+    18: s
+    19: x
+    20: '0'
+    21: z
+    22: '7'
+    23: k
+    24: a
+    25: h
+    26: j
+    27: c
+    28: y
+    29: n
+    30: o
+    31: cos
+    32: (
+    33: )
+    34: tan
+    35: sin
+  max_length: 23
+  n_words: 36
+  word2count:
+    (: 57681
+    ): 57681
+    '*': 1825902
+    '**': 980000
+    +: 780714
+    '-': 1261738
+    '0': 457188
+    '1': 817459
+    '2': 1787016
+    '3': 474934
+    '4': 599736
+    '5': 455722
+    '6': 505059
+    '7': 305439
+    '8': 451802
+    '9': 250634
+    a: 120176
+    c: 120068
+    cos: 19268
+    h: 119568
+    i: 239507
+    j: 119545
+    k: 119964
+    n: 238789
+    o: 119388
+    s: 240011
+    sin: 19188
+    t: 120388
+    tan: 19225
+    x: 119395
+    y: 120489
+    z: 120250
+  word2index:
+    (: 32
+    ): 33
+    '*': 7
+    '**': 9
+    +: 13
+    '-': 4
+    '0': 20
+    '1': 14
+    '2': 10
+    '3': 6
+    '4': 12
+    '5': 17
+    '6': 5
+    '7': 22
+    '8': 15
+    '9': 16
+    <eos>: 2
+    <pad>: 0
+    <sos>: 1
+    <unk>: 3
+    a: 24
+    c: 27
+    cos: 31
+    h: 25
+    i: 11
+    j: 26
+    k: 23
+    n: 29
+    o: 30
+    s: 18
+    sin: 35
+    t: 8
+    tan: 34
+    x: 19
+    y: 28
+    z: 21
+val_check_interval: 0.2
+weights_save_path: null

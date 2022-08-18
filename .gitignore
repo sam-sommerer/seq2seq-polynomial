@@ -1,7 +1,6 @@
 ### Project ###
 /.data/
 /data/
-/models/
 /notebooks/
 /archive/
 _*.py

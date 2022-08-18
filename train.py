@@ -183,6 +183,9 @@ class Seq2Seq(pl.LightningModule):
         # src = [batch size, src len]
         # trg = [batch size, trg len]
 
+        print(f"src: {src}")
+        print(f"trg: {trg}")
+
         src_mask = self.make_src_mask(src)
         trg_mask = self.make_trg_mask(trg)
 

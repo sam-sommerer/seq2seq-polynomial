@@ -16,4 +16,5 @@ if __name__ == "__main__":
     set_seed(args.seed)
     pairs = PolynomialLanguage.load_pairs(args.data_path)
     model = load_model(args.dirpath, args.model_ckpt)
+
     evaluate(model, pairs)

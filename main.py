@@ -48,4 +48,4 @@ def main(filepath: str):
 
 
 if __name__ == "__main__":
-    main("test.txt" if "-t" in sys.argv else "train.txt")
+    main("test.txt" if "-t" in sys.argv else "short.txt")

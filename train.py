@@ -104,7 +104,7 @@ class Seq2Seq(pl.LightningModule):
             enc_pf_dim,
             enc_dropout,
             device,
-            encoder_version=encoder_version
+            encoder_version=encoder_version,
         )
 
         self.decoder = Decoder(
@@ -117,7 +117,9 @@ class Seq2Seq(pl.LightningModule):
             device,
         )
 
-        self.criterion = nn.CrossEntropyLoss(ignore_index=self.trg_lang.PAD_idx, label_smoothing=0.2)
+        self.criterion = nn.CrossEntropyLoss(
+            ignore_index=self.trg_lang.PAD_idx, label_smoothing=0.2
+        )
         self.initialize_weights()
         self.to(device)
         self.enc_heads = enc_heads
@@ -359,7 +361,9 @@ def train(
 
 def evaluate(model, test_pairs, batch_size=128):
     src_sentences, trg_sentences = zip(*test_pairs)
-    prd_sentences, _, _ = model.predict(src_sentences, batch_size=batch_size, trg=trg_sentences)
+    prd_sentences, _, _ = model.predict(
+        src_sentences, batch_size=batch_size, trg=trg_sentences
+    )
     assert len(prd_sentences) == len(src_sentences) == len(trg_sentences)
 
     total_score = 0

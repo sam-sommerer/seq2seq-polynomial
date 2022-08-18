@@ -118,7 +118,11 @@ class EncoderLayer(nn.Module):
         )
 
         self.self_attn = MultiheadAttention(
-            embed_dim=hid_dim, num_heads=n_heads, dropout=dropout, device=device, batch_first=True
+            embed_dim=hid_dim,
+            num_heads=n_heads,
+            dropout=dropout,
+            device=device,
+            batch_first=True,
         )
 
         self.linear1 = Linear(hid_dim, pf_dim)

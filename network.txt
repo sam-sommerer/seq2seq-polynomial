@@ -1,0 +1,10 @@
+  | Name      | Type             | Params
+-----------------------------------------------
+0 | encoder   | Encoder          | 1.6 M
+1 | decoder   | Decoder          | 2.4 M
+2 | criterion | CrossEntropyLoss | 0
+-----------------------------------------------
+4.0 M     Trainable params
+0         Non-trainable params
+4.0 M     Total params
+16.130    Total estimated model params size (MB)

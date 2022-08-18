@@ -1,6 +1,7 @@
 import os
 import pickle
 import argparse
+import shutil
 
 import torch
 import numpy as np
@@ -9,6 +10,7 @@ import pytorch_lightning as pl
 from torch.utils.data import Dataset, DataLoader
 from pytorch_lightning.callbacks import ModelCheckpoint
 from tqdm import tqdm
+from pathlib import Path
 
 from data import PolynomialLanguage, train_test_split
 from utils import get_device, set_seed, score
@@ -82,6 +84,7 @@ class Seq2Seq(pl.LightningModule):
         enc_dropout=0.1,
         dec_dropout=0.1,
         lr=0.0005,
+        encoder_version="ReZero",
         **kwargs,  # throwaway
     ):
         super().__init__()
@@ -101,6 +104,7 @@ class Seq2Seq(pl.LightningModule):
             enc_pf_dim,
             enc_dropout,
             device,
+            encoder_version=encoder_version
         )
 
         self.decoder = Decoder(
@@ -113,9 +117,10 @@ class Seq2Seq(pl.LightningModule):
             device,
         )
 
-        self.criterion = nn.CrossEntropyLoss(ignore_index=self.trg_lang.PAD_idx)
+        self.criterion = nn.CrossEntropyLoss(ignore_index=self.trg_lang.PAD_idx, label_smoothing=0.2)
         self.initialize_weights()
         self.to(device)
+        self.enc_heads = enc_heads
 
     def initialize_weights(self):
         def _initialize_weights(m):
@@ -130,6 +135,24 @@ class Seq2Seq(pl.LightningModule):
         # src = [batch size, src len]
 
         src_mask = (src != self.src_lang.PAD_idx).unsqueeze(1).unsqueeze(2)
+        # print(f"src_mask: {src_mask}")
+        # print(f"src_mask.size(): {src_mask.size()}")
+
+        # src_mask = [batch size, 1, 1, src len]
+
+        return src_mask
+
+    def make_encoder_src_mask(self, src, num_heads):
+
+        # src = [batch size, src len]
+
+        src_mask = (src == self.src_lang.PAD_idx).unsqueeze(-2)
+        # print(f"encoder_src_mask.size(): {src_mask.size()}")
+        src_mask = torch.repeat_interleave(src_mask, repeats=src_mask.size(2), dim=1)
+        # print(f"encoder_src_mask.size(): {src_mask.size()}")
+        src_mask = src_mask.repeat(num_heads, 1, 1)
+        # print(f"encoder_src_mask: {src_mask}")
+        # print(f"encoder_src_mask.size(): {src_mask.size()}")
 
         # src_mask = [batch size, 1, 1, src len]
 
@@ -163,10 +186,12 @@ class Seq2Seq(pl.LightningModule):
         src_mask = self.make_src_mask(src)
         trg_mask = self.make_trg_mask(trg)
 
+        encoder_src_mask = self.make_encoder_src_mask(src, self.enc_heads)
+
         # src_mask = [batch size, 1, 1, src len]
         # trg_mask = [batch size, 1, trg len, trg len]
 
-        enc_src = self.encoder(src, src_mask)
+        enc_src = self.encoder(src, encoder_src_mask)
 
         # enc_src = [batch size, src len, hid dim]
 
@@ -177,7 +202,7 @@ class Seq2Seq(pl.LightningModule):
 
         return output, attention
 
-    def predict(self, sentences, batch_size=128):
+    def predict(self, sentences, batch_size=128, trg=None):
         """Efficiently predict a list of sentences"""
         pred_tensors = [
             sentence_to_tensor(sentence, self.src_lang)
@@ -212,11 +237,13 @@ class Seq2Seq(pl.LightningModule):
         # batch = src_tensor when predicting = [batch_size, src len]
 
         src_tensor = batch
+        # print(f"src_tensor.size(): {src_tensor.size()}")
         src_mask = self.make_src_mask(batch)
+        encoder_src_mask = self.make_encoder_src_mask(batch, self.enc_heads)
 
         # src_mask = [batch size, 1, 1, src len]
 
-        enc_src = self.encoder(src_tensor, src_mask)
+        enc_src = self.encoder(src_tensor, encoder_src_mask)
 
         # enc_src = [batch size, src len, hid dim]
 
@@ -422,8 +449,7 @@ def train(
 
 def evaluate(model, test_pairs, batch_size=128):
     src_sentences, trg_sentences = zip(*test_pairs)
-
-    prd_sentences, _, _ = model.predict(src_sentences, batch_size=batch_size)
+    prd_sentences, _, _ = model.predict(src_sentences, batch_size=batch_size, trg=trg_sentences)
     assert len(prd_sentences) == len(src_sentences) == len(trg_sentences)
 
     total_score = 0
@@ -470,9 +496,14 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=512)
     parser.add_argument("--num_workers", type=int, default=8)
     parser.add_argument("--seed", type=int, default=1234)
+    parser.add_argument("--encoder_Version", type=str, default="ReZero")
     parser = Seq2Seq.add_model_specific_args(parser)
     parser = pl.Trainer.add_argparse_args(parser)
     args = parser.parse_args()
+
+    dirpath = Path(args.dirpath)
+    if dirpath.exists() and dirpath.is_dir():
+        shutil.rmtree(dirpath)
 
     os.makedirs(args.dirpath, exist_ok=False)
     train_set_pairs = PolynomialLanguage.load_pairs(args.train_path)
